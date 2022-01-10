@@ -1,16 +1,18 @@
 [bootstrap]
-main_collection = /main/main.collectionc
+main_collection = /main/mainScreen.collectionc
 
 [script]
 shared_state = 1
 
 [display]
-width = 960
-height = 640
+width = 1056
+height = 720
 
 [android]
 input_method = HiddenInputField
 
 [project]
 title = TypingGlovesApp
+dependencies#0 = https://github.com/subsoap/defos/archive/master.zip
+dependencies#1 = https://github.com/britzl/gooey/archive/master.zip
 
