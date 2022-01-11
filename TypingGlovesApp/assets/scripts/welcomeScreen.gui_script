@@ -2,7 +2,7 @@ local gooey = require "gooey.gooey"
 local transitions = require "monarch.transitions.gui"
 
 function init(self)
-  	msg.post('@render:', 'clear_color', {color = vmath.vector4(22,22,22,255)/255})
+
     msg.post(".", "acquire_input_focus")
     self.transition = transitions.create(gui.get_node('root'))
     .show_in(transitions.fade_in, gui.EASING_LINEAR, 0.5, 0.1)

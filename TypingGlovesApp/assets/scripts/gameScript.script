@@ -1,6 +1,15 @@
 local monarch = require "monarch.monarch"
 
 function init(self)
+
+	--SETT_START
+	--defos.disable_maximize_button()
+	--defos.disable_window_resize()
+	--SETT_END
+
+	msg.post('@render:', 'clear_color', {color = vmath.vector4(22,22,22,255)/255})
+	msg.post("@render:", "use_fixed_fit_projection")
+
 	timer.delay(0.1, false, function()
 		monarch.show('welcomeScreen')
 	end)

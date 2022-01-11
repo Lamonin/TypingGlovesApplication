@@ -25,11 +25,11 @@ end
 
 
 function disable_prev_button(info)
-  gui.animate(prev_press_btn_node, 'position.x', 140, gui.EASING_OUTCUBIC, 0.2)
-  gui.animate(prev_press_btn_node, 'color', vmath.vector4(77,77,77,255)/255, gui.EASING_OUTCUBIC, 0.2)
+  gui.animate(prev_press_btn_node, 'position.x', 140, gui.EASING_OUTCUBIC, 0.3)
+  gui.animate(prev_press_btn_node, 'color', vmath.vector4(77,77,77,255)/255, gui.EASING_OUTCUBIC, 0.3)
   prev_press_btn_node = info.node
-  gui.animate(prev_press_btn_node, 'position.x', 204, gui.EASING_OUTCUBIC, 0.2)
-  gui.animate(prev_press_btn_node, 'color', vmath.vector4(0,0,255,255)/255, gui.EASING_OUTCUBIC, 0.2)
+  gui.animate(prev_press_btn_node, 'position.x', 204, gui.EASING_OUTCUBIC, 0.3)
+  gui.animate(prev_press_btn_node, 'color', vmath.vector4(0,0,255,255)/255, gui.EASING_OUTCUBIC, 0.3)
 end
 
 function on_input(self, action_id, action)

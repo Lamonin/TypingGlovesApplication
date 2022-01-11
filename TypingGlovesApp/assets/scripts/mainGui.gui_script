@@ -241,11 +241,6 @@ function process_input(action_id, action)
 end
 
 function init(self)
-	--SETT_START
-	defos.disable_maximize_button()
-	defos.disable_window_resize()
-	--SETT_END
-
 	msg.post(".", "acquire_input_focus")
 	init_keys()
 

@@ -7,6 +7,7 @@ shared_state = 1
 [display]
 width = 1056
 height = 720
+high_dpi = 1
 
 [android]
 input_method = HiddenInputField
@@ -16,4 +17,7 @@ title = TypingGlovesApp
 dependencies#0 = https://github.com/subsoap/defos/archive/master.zip
 dependencies#1 = https://github.com/britzl/gooey/archive/master.zip
 dependencies#2 = https://github.com/britzl/monarch/archive/master.zip
+
+[sprite]
+subpixels = 0
 
