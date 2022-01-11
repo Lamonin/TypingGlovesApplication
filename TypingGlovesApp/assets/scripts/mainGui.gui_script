@@ -255,6 +255,7 @@ function init(self)
 			.show_in(gui.get_node('RHand'), transitions.slide_in_bottom, gui.EASING_OUTCUBIC, 2, 1.3)
 			.show_in(gui.get_node('top_panel'), transitions.slide_in_top, gui.EASING_OUTCUBIC, 2, 1.3)
 			.show_out(gui.get_node('root'), transitions.fade_out, gui.EASING_INCUBIC, 0.5, 0)
+			.back_in(gui.get_node('root'), transitions.fade_in, gui.EASING_OUTCUBIC, 0.5, 1)
 end
 
 function final(self)
@@ -303,7 +304,7 @@ end
 
 function on_input(self, action_id, action)
 	process_input(action_id, action)
-	gooey.button('btn_connect_glove', action_id, action, function() msg.post('mainScreen:/script#gameScript', 'OPEN_CONNECT_SCREEN') end)
+	gooey.button('btn_connect_glove', action_id, action, function(info) msg.post('mainScreen:/script#gameScript', 'OPEN_CONNECT_SCREEN') end)
 	gooey.button('btn_settings', action_id, action, function() msg.post('mainScreen:/script#gameScript', 'OPEN_SETTINGS_SCREEN') end)
 end
 

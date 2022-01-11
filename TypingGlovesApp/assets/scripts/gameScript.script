@@ -24,9 +24,13 @@ end
 
 function on_message(self, message_id, message, sender)
 	if (message_id == hash('OPEN_STD_SCREEN')) then
-		monarch.show('mainGui')
+		monarch.show('mainGui', { clear = true })
 	elseif (message_id == hash('OPEN_CONNECT_SCREEN')) then
 		monarch.show('connectScreen')
+	elseif (message_id == hash('OPEN_SETTINGS_SCREEN')) then
+		monarch.show('settingsScreen')
+	elseif (message_id == hash('BACK_STD_SCREEN')) then
+		monarch.back('mainGui')
 	end
 end
 
