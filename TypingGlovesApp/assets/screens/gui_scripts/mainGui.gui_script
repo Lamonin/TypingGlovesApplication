@@ -1,4 +1,5 @@
 local gooey = require "gooey.gooey"
+local monarch = require "monarch.monarch"
 local transitions = require "monarch.transitions.gui"
 
 finger_group = {
@@ -15,7 +16,7 @@ finger_group = {
 	['R_Middle'] = { color = vmath.vector4(220,211,240,255)/255 },
 	['R_Ring'] = { color = vmath.vector4(143,180,212,255)/255 },
 	['R_Pinky'] = { color = vmath.vector4(187,238,77,255)/255 },
-}
+	}
 
 --Переменные-параметры
 local KEY_STD_ALPHA = 0.7
@@ -37,64 +38,65 @@ function set_std_key_color(key_id)
 	local color = key_data.finger_group[0].color
 	gui.set_color(gui.get_node(key_data.id..'/KeyL'), vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA))
 
-	if (key_data.finger_group[1] ~= nil) then
-		color = key_data.finger_group[1].color
-	end
+	if (key_data.finger_group[1] ~= nil) then color = key_data.finger_group[1].color end
 	gui.set_color(gui.get_node(key_data.id..'/KeyR'), vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA))
 end
 
-function animate_hlght_key_color(key_id)
+function animate_key_select(key_id)
 	local key_data = keys_objects[key_id]
-	local color = key_data.finger_group[0].color
 	gui.cancel_animation(gui.get_node(key_data.id..'/KeyL'), 'color')
-	gui.animate(gui.get_node(key_data.id..'/KeyL'), 'color', vmath.vector4(color.x, color.y, color.z, 1), gui.EASING_LINEAR, 0.1)
+	gui.animate(gui.get_node(key_data.id..'/KeyL'), 'color.w', 1, gui.EASING_LINEAR, 0.1)
 	anim_finger_select(key_data.finger_group[0].node)
+
 	if (key_data.finger_group[1] ~= nil) then
-		color = key_data.finger_group[1].color
 		anim_finger_select(key_data.finger_group[1].node)
 	end
-	gui.animate(gui.get_node(key_data.id..'/KeyR'), 'color', vmath.vector4(color.x, color.y, color.z, 1), gui.EASING_LINEAR, 0.1)
+	gui.animate(gui.get_node(key_data.id..'/KeyR'), 'color.w', 1, gui.EASING_LINEAR, 0.1)
 end
 
-function animate_std_key_color(key_id)
+function animate_key_deselect(key_id)
 	local key_data = keys_objects[key_id]
-	local color = key_data.finger_group[0].color
 	gui.cancel_animation(gui.get_node(key_data.id..'/KeyL'), 'color')
-	gui.animate(gui.get_node(key_data.id..'/KeyL'), 'color', vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA), gui.EASING_LINEAR, 0.1)
-	anim_finger_deselect(key_data.finger_group[0].node)
+	gui.animate(gui.get_node(key_data.id..'/KeyL'), 'color.w', KEY_STD_ALPHA, gui.EASING_LINEAR, 0.1)
 
+	anim_finger_deselect(key_data.finger_group[0].node)
 	if (key_data.finger_group[1] ~= nil) then
-		color = key_data.finger_group[1].color
 		anim_finger_deselect(key_data.finger_group[1].node)
 	end
-	gui.animate(gui.get_node(key_data.id..'/KeyR'), 'color', vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA), gui.EASING_LINEAR, 0.1)
+
+	-- if (selected_key_node ~= nil) then
+	-- 	local t_key = keys_objects[gui.get_id(selected_key_node)]
+	-- 	if (t_key.finger_group[0].node == node or (t_key.finger_group[1] ~= nil and t_key.finger_group[1].node == node)) then
+	--
+	-- 	end
+	-- end
+
+	gui.animate(gui.get_node(key_data.id..'/KeyR'), 'color.w', KEY_STD_ALPHA, gui.EASING_LINEAR, 0.1)
 end
 
 function init_finger(finger_id)
 	local node = gui.get_node(finger_id)
 	finger_group[finger_id]['node'] = node
+	finger_group[finger_id]['is_selected'] = false
 
 	local color = finger_group[finger_id].color
 	gui.set_color(node, vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA))
 end
 
-function anim_finger_select(node)
-	local color = gui.get_color(node)
-	gui.cancel_animation(node, 'color')
-	gui.animate(node, 'color', vmath.vector4(color.x, color.y, color.z, 1), gui.EASING_LINEAR, 0.1)
+function lock_finger_selecting(key_node, state)
+	local finger_group = keys_objects[key_id]
 end
 
-function anim_finger_deselect(node)
-	if (selected_key_node ~= nil) then
-		local t_key = keys_objects[gui.get_id(selected_key_node)]
-		if (t_key.finger_group[0].node == node) then return end
-		if (t_key.finger_group[1] ~= nil) then
-			if (t_key.finger_group[1].node == node) then return end
-		end
-	end
-	local color = gui.get_color(node)
+function anim_finger_select(node)
+	if (node == nil) then return end
 	gui.cancel_animation(node, 'color')
-	gui.animate(node, 'color', vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA), gui.EASING_LINEAR, 0.1)
+	gui.animate(node, 'color.w', 1, gui.EASING_LINEAR, 0.1)
+end
+
+function anim_finger_deselect(finger_data)
+	if (finger_data.is_selected) then return end
+	gui.cancel_animation(node, 'color')
+	gui.animate(node, 'color.w', KEY_STD_ALPHA, gui.EASING_LINEAR, 0.1)
 end
 
 function init_keys()
@@ -178,11 +180,11 @@ function init_keys()
 	init_finger('L_Index')
 	init_finger('L_Thumb')
 
-	init_finger('R_Pinky')
-	init_finger('R_Ring')
-	init_finger('R_Middle')
-	init_finger('R_Index')
 	init_finger('R_Thumb')
+	init_finger('R_Index')
+	init_finger('R_Middle')
+	init_finger('R_Ring')
+	init_finger('R_Pinky')
 
 	--Заканчиваем инициализацию клавиш
 	for key, val in pairs(keys_objects) do
@@ -225,7 +227,7 @@ function finger_press(info)
 		end
 	end
 
-	animate_hlght_key_color(gui.get_id(selected_key_node))
+	animate_key_select(gui.get_id(selected_key_node))
 end
 
 function process_input(action_id, action)
@@ -240,15 +242,17 @@ function process_input(action_id, action)
 	end
 end
 
+local screen_is_not_interactable = true
+
 function init(self)
 	msg.post(".", "acquire_input_focus")
 	init_keys()
 
 	self.transition = transitions.create()
-			.show_in(gui.get_node('KeyBoard'), transitions.fade_in, gui.EASING_OUTSINE, 2, 0.9)
-			.show_in(gui.get_node('LHand'), transitions.slide_in_bottom, gui.EASING_OUTCUBIC, 2, 0.9)
-			.show_in(gui.get_node('RHand'), transitions.slide_in_bottom, gui.EASING_OUTCUBIC, 2, 1.3)
-			.show_in(gui.get_node('top_panel'), transitions.slide_in_top, gui.EASING_OUTCUBIC, 2, 1.3)
+			.show_in(gui.get_node('KeyBoard'), transitions.fade_in, gui.EASING_OUTCUBIC, 1.5, 0.7)
+			.show_in(gui.get_node('LHand'), transitions.slide_in_bottom, gui.EASING_OUTCUBIC, 1.5, 0.7)
+			.show_in(gui.get_node('RHand'), transitions.slide_in_bottom, gui.EASING_OUTCUBIC, 1.5, 1.1)
+			.show_in(gui.get_node('top_panel'), transitions.slide_in_top, gui.EASING_OUTCUBIC, 2, 1.1)
 			.show_out(gui.get_node('root'), transitions.fade_out, gui.EASING_INCUBIC, 0.5, 0)
 			.back_in(gui.get_node('root'), transitions.fade_in, gui.EASING_OUTCUBIC, 0.5, 1)
 end
@@ -259,14 +263,12 @@ function final(self)
 	-- Remove this function if not needed
 end
 
-function update(self, dt)
-	-- Add update code here
-	-- Learn more: https://defold.com/manuals/script/
-	-- Remove this function if not needed
-end
-
 function on_message(self, message_id, message, sender)
 	self.transition.handle(message_id, message, sender)
+
+	if message_id == monarch.TRANSITION.DONE and (message.transition == monarch.TRANSITION.SHOW_IN or message.transition == monarch.TRANSITION.BACK_IN) then
+		screen_is_not_interactable = false
+	end
 end
 
 --Функция обновления клавиш
@@ -275,9 +277,9 @@ function key_update(node)
 
 	local idd = gui.get_id(node.node)
 	if node.over_now then
-		animate_hlght_key_color(idd)
+		animate_key_select(idd)
 	elseif node.out_now then
-		animate_std_key_color(idd)
+		animate_key_deselect(idd)
 	end
 end
 
@@ -286,7 +288,7 @@ function press(node)
 	selected_key_node = nil
 	if (select ~= nil and select ~= node.node) then
 		gui.set_enabled(gui.get_node(keys_objects[gui.get_id(select)].id..'/Frame'), false)
-		animate_std_key_color(gui.get_id(select))
+		animate_key_deselect(gui.get_id(select))
 	end
 
 	if (select == node.node) then
@@ -297,10 +299,19 @@ function press(node)
 	end
 end
 
+local function button_update(button)
+  if (button.over_now) then
+    gui.animate(button.node, 'color.w', 0.8, gui.EASING_LINEAR, 0.1)
+  elseif (button.out_now) then
+    gui.animate(button.node, 'color.w', 1, gui.EASING_LINEAR, 0.1)
+  end
+end
+
 function on_input(self, action_id, action)
+	if (screen_is_not_interactable) then return end
 	process_input(action_id, action)
-	gooey.button('btn_connect_glove', action_id, action, function(info) msg.post('mainScreen:/script#gameScript', 'OPEN_CONNECT_SCREEN') end)
-	gooey.button('btn_settings', action_id, action, function() msg.post('mainScreen:/script#gameScript', 'OPEN_SETTINGS_SCREEN') end)
+	gooey.button('btn_connect_glove', action_id, action, function(info) msg.post('mainScreen:/script#gameScript', 'OPEN_CONNECT_SCREEN') end, button_update)
+	gooey.button('btn_settings', action_id, action, function() msg.post('mainScreen:/script#gameScript', 'OPEN_SETTINGS_SCREEN') end, button_update)
 end
 
 function on_reload(self)

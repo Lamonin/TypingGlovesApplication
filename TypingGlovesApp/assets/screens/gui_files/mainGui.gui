@@ -1,4 +1,4 @@
-script: "/assets/scripts/mainGui.gui_script"
+script: "/assets/screens/gui_scripts/mainGui.gui_script"
 fonts {
   name: "ibm_plex_12dp"
   font: "/assets/fonts/ibm_plex_12dp.font"

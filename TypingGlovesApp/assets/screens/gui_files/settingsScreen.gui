@@ -1,4 +1,4 @@
-script: "/assets/settingsScreen.gui_script"
+script: "/assets/screens/gui_scripts/settingsScreen.gui_script"
 fonts {
   name: "ibm_plex_20dp_light"
   font: "/assets/fonts/ibm_plex_20dp_light.font"

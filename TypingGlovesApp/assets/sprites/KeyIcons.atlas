@@ -10,6 +10,6 @@ images {
   image: "/assets/sprites/keyBodyHalf.png"
   sprite_trim_mode: SPRITE_TRIM_MODE_OFF
 }
-margin: 0
+margin: 2
 extrude_borders: 1
 inner_padding: 0

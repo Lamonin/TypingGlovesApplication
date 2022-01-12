@@ -1,0 +1,35 @@
+local gooey = require "gooey.gooey"
+local monarch = require "monarch.monarch"
+local transitions = require "monarch.transitions.gui"
+
+local screen_is_not_interactable = true
+
+function init(self)
+    msg.post(".", "acquire_input_focus")
+    self.transition = transitions.create(gui.get_node('root'))
+    .show_in(transitions.fade_in, gui.EASING_OUTSINE, 0.5, 0.1)
+    .show_out(transitions.slide_out_top, gui.EASING_INCUBIC, 0.5, 0)
+end
+
+function on_message(self, message_id, message, sender)
+  self.transition.handle(message_id, message, sender)
+
+  if message_id == monarch.TRANSITION.DONE and message.transition == monarch.TRANSITION.SHOW_IN then
+		screen_is_not_interactable = false
+	end
+end
+
+local function button_update(button)
+  if (button.over_now) then
+    gui.animate(button.node, 'color.w', 0.8, gui.EASING_LINEAR, 0.1)
+  elseif (button.out_now) then
+    gui.animate(button.node, 'color.w', 1, gui.EASING_LINEAR, 0.1)
+  end
+end
+
+function on_input(self, action_id, action)
+  if (screen_is_not_interactable) then return end
+
+  gooey.button('btn_connect_later', action_id, action, function() msg.post('mainScreen:/script#gameScript', 'OPEN_STD_SCREEN') end, button_update)
+  gooey.button('btn_YEES', action_id, action, function() msg.post('mainScreen:/script#gameScript', 'OPEN_CONNECT_SCREEN') end, button_update)
+end
