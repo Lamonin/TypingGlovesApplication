@@ -1,6 +1,6 @@
-font: "/assets/fonts/IBMPlexSans-Light.ttf"
+font: "/assets/fonts/IBMPlexSans-Regular.ttf"
 material: "/builtins/fonts/font.material"
-size: 32
+size: 48
 antialias: 1
 alpha: 1.0
 outline_alpha: 0.0

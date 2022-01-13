@@ -1,22 +1,7 @@
 local gooey = require "gooey.gooey"
 local monarch = require "monarch.monarch"
 local transitions = require "monarch.transitions.gui"
-
-finger_group = {
-	['none'] = { color = vmath.vector4(120,120,120,255)/255 },
-
-	['L_Pinky'] = { color = vmath.vector4(255,92,99,255)/255 },
-	['L_Ring'] = { color = vmath.vector4(255,166,92,255)/255 },
-	['L_Middle'] = { color = vmath.vector4(255,246,77,255)/255 },
-	['L_Index'] = { color = vmath.vector4(77,202,123,255)/255 },
-	['L_Thumb'] = { color = vmath.vector4(77,191,241,255)/255 },
-
-	['R_Thumb'] = { color = vmath.vector4(116,126,223,255)/255 },
-	['R_Index'] = { color = vmath.vector4(208,127,194,255)/255 },
-	['R_Middle'] = { color = vmath.vector4(220,211,240,255)/255 },
-	['R_Ring'] = { color = vmath.vector4(143,180,212,255)/255 },
-	['R_Pinky'] = { color = vmath.vector4(187,238,77,255)/255 },
-	}
+local profiles = require "assets.scripts.keyboardProfile"
 
 --Переменные-параметры
 local KEY_STD_ALPHA = 0.7
@@ -24,155 +9,116 @@ local KEY_STD_ALPHA = 0.7
 --Переменные для хранения информации о клавишах
 local selected_key_node = nil
 local keys_objects = {}
+local finger_group = nil
 
-function add_key(name, char, finger_group)
-	if (keys_objects[hash(name..'/Key')]~=nil) then
-		keys_objects[hash(name..'/Key')].finger_group[1] = finger_group
+function add_key(name, char, finger_id)
+	local finger = finger_group[hash(finger_id)]
+	local key_id = hash(name..'/Key')
+
+	if (keys_objects[key_id]~=nil) then
+		keys_objects[key_id].finger[1] = finger
 	else
-		keys_objects[hash(name..'/Key')] = {['id'] = name, ['char'] = char, ['finger_group'] = {[0]=finger_group}}
+		keys_objects[key_id] = {
+			['id'] = name,
+			['node'] = gui.get_node(name..'/Key'),
+			['char'] = char,
+			['finger'] = {[0] = finger, left = gui.get_node(name..'/KeyL'), right = gui.get_node(name..'/KeyR')}
+		}
+
+		gui.set_text(gui.get_node(name..'/KeyChar'), char)
+		gui.set_enabled(gui.get_node(name..'/Frame'), false)
+	end
+	set_std_key_color(key_id)
+end
+
+function change_profile(profile_id)
+	local profile = profiles[profile_id]
+	for key, val in pairs(profile) do
+		local key_id = hash(key..'/Key')
+		keys_objects[key_id].finger[0] = finger_group[hash(val[1])]
+		if (val[2] ~= nil) then
+			keys_objects[key_id].finger[1] = finger_group[hash(val[2])]
+		else
+			keys_objects[key_id].finger[1] = nil
+		end
+
+		animate_key_deselect(key_id, 0.5)
 	end
 end
 
 function set_std_key_color(key_id)
 	local key_data = keys_objects[key_id]
-	local color = key_data.finger_group[0].color
-	gui.set_color(gui.get_node(key_data.id..'/KeyL'), vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA))
-
-	if (key_data.finger_group[1] ~= nil) then color = key_data.finger_group[1].color end
-	gui.set_color(gui.get_node(key_data.id..'/KeyR'), vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA))
+	local color = key_data.finger[0].color
+	gui.set_color(key_data.finger.left, vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA))
+	if (key_data.finger[1] ~= nil) then color = key_data.finger[1].color  end
+	gui.set_color(key_data.finger.right, vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA))
 end
 
 function animate_key_select(key_id)
 	local key_data = keys_objects[key_id]
-	gui.cancel_animation(gui.get_node(key_data.id..'/KeyL'), 'color')
-	gui.animate(gui.get_node(key_data.id..'/KeyL'), 'color.w', 1, gui.EASING_LINEAR, 0.1)
-	anim_finger_select(key_data.finger_group[0].node)
+	local color = key_data.finger[0].color
+	gui.animate(key_data.finger.left, 'color', color, gui.EASING_LINEAR, 0.1)
+	anim_finger_select(key_data.finger[0].node)
 
-	if (key_data.finger_group[1] ~= nil) then
-		anim_finger_select(key_data.finger_group[1].node)
+	if (key_data.finger[1] ~= nil) then
+		anim_finger_select(key_data.finger[1].node)
+		color = key_data.finger[1].color
 	end
-	gui.animate(gui.get_node(key_data.id..'/KeyR'), 'color.w', 1, gui.EASING_LINEAR, 0.1)
+	gui.animate(key_data.finger.right, 'color', color, gui.EASING_LINEAR, 0.1)
 end
 
-function animate_key_deselect(key_id)
+function animate_key_deselect(key_id, duration)
+	if (duration == nil) then duration = 0.1 end
 	local key_data = keys_objects[key_id]
-	gui.cancel_animation(gui.get_node(key_data.id..'/KeyL'), 'color')
-	gui.animate(gui.get_node(key_data.id..'/KeyL'), 'color.w', KEY_STD_ALPHA, gui.EASING_LINEAR, 0.1)
+	local color = key_data.finger[0].color
+	gui.animate(key_data.finger.left, 'color', vmath.vector4(color.x,color.y,color.z, KEY_STD_ALPHA), gui.EASING_LINEAR, duration)
 
-	anim_finger_deselect(key_data.finger_group[0].node)
-	if (key_data.finger_group[1] ~= nil) then
-		anim_finger_deselect(key_data.finger_group[1].node)
+	anim_finger_deselect(key_data.finger[0].node)
+	if (key_data.finger[1] ~= nil) then
+		anim_finger_deselect(key_data.finger[1].node)
+		color = key_data.finger[1].color
 	end
-
-	-- if (selected_key_node ~= nil) then
-	-- 	local t_key = keys_objects[gui.get_id(selected_key_node)]
-	-- 	if (t_key.finger_group[0].node == node or (t_key.finger_group[1] ~= nil and t_key.finger_group[1].node == node)) then
-	--
-	-- 	end
-	-- end
-
-	gui.animate(gui.get_node(key_data.id..'/KeyR'), 'color.w', KEY_STD_ALPHA, gui.EASING_LINEAR, 0.1)
+	gui.animate(key_data.finger.right, 'color', vmath.vector4(color.x,color.y,color.z, KEY_STD_ALPHA), gui.EASING_LINEAR, duration)
 end
 
 function init_finger(finger_id)
 	local node = gui.get_node(finger_id)
-	finger_group[finger_id]['node'] = node
-	finger_group[finger_id]['is_selected'] = false
-
-	local color = finger_group[finger_id].color
+	finger_group[hash(finger_id)]['node'] = node
+	finger_group[hash(finger_id)]['is_selected'] = false
+	local color = finger_group[hash(finger_id)].color
 	gui.set_color(node, vmath.vector4(color.x, color.y, color.z, KEY_STD_ALPHA))
-end
-
-function lock_finger_selecting(key_node, state)
-	local finger_group = keys_objects[key_id]
 end
 
 function anim_finger_select(node)
 	if (node == nil) then return end
-	gui.cancel_animation(node, 'color')
 	gui.animate(node, 'color.w', 1, gui.EASING_LINEAR, 0.1)
 end
 
-function anim_finger_deselect(finger_data)
-	if (finger_data.is_selected) then return end
-	gui.cancel_animation(node, 'color')
+function anim_finger_deselect(node, anyway)
+	if (not anyway and (node == nil or finger_group[gui.get_id(node)].is_selected)) then return end
+	if (anyway) then finger_group[gui.get_id(node)].is_selected = false end
 	gui.animate(node, 'color.w', KEY_STD_ALPHA, gui.EASING_LINEAR, 0.1)
 end
 
 function init_keys()
-	--Строим таблицу клавиш
-	add_key('Key_Tilda', '~', finger_group.L_Pinky)
-	add_key('Key_Tab', 'Tab', finger_group.L_Pinky)
-	add_key('Key_Q', 'Q', finger_group.L_Pinky)
-	add_key('Key_A', 'A', finger_group.L_Pinky)
-	add_key('Key_CapsLock', 'Caps', finger_group.L_Pinky)
-	add_key('Key_LShift', 'Shift', finger_group.L_Pinky)
-	add_key('Key_LCtrl', 'Ctrl', finger_group.L_Pinky)
+	finger_group = {
+		[hash('none')] = { color = vmath.vector4(120,120,120,255)/255 },
 
-	add_key('Key_1', '1', finger_group.L_Ring)
-	add_key('Key_2', '2', finger_group.L_Ring)
-	add_key('Key_W', 'W', finger_group.L_Ring)
-	add_key('Key_S', 'S', finger_group.L_Ring)
-	add_key('Key_Z', 'Z', finger_group.L_Ring)
+		[hash('L_Pinky')] = { color = vmath.vector4(255,92,99,255)/255 },
+		[hash('L_Ring')] = { color = vmath.vector4(255,166,92,255)/255 },
+		[hash('L_Middle')] = { color = vmath.vector4(255,246,77,255)/255 },
+		[hash('L_Index')] = { color = vmath.vector4(77,202,123,255)/255 },
+		[hash('L_Thumb')] = { color = vmath.vector4(77,191,241,255)/255 },
 
-	add_key('Key_3', '3', finger_group.L_Middle)
-	add_key('Key_4', '4', finger_group.L_Middle)
-	add_key('Key_E', 'E', finger_group.L_Middle)
-	add_key('Key_D', 'D', finger_group.L_Middle)
-	add_key('Key_X', 'X', finger_group.L_Middle)
+		[hash('R_Thumb')] = { color = vmath.vector4(116,126,223,255)/255 },
+		[hash('R_Index')] = { color = vmath.vector4(208,127,194,255)/255 },
+		[hash('R_Middle')] = { color = vmath.vector4(220,211,240,255)/255 },
+		[hash('R_Ring')] = { color = vmath.vector4(143,180,212,255)/255 },
+		[hash('R_Pinky')] = { color = vmath.vector4(187,238,77,255)/255 },
+		}
 
-	add_key('Key_5', '5', finger_group.L_Index)
-	add_key('Key_6', '6', finger_group.L_Index)
-	add_key('Key_R', 'R', finger_group.L_Index)
-	add_key('Key_T', 'T', finger_group.L_Index)
-	add_key('Key_F', 'F', finger_group.L_Index)
-	add_key('Key_G', 'G', finger_group.L_Index)
-	add_key('Key_C', 'C', finger_group.L_Index)
-	add_key('Key_V', 'V', finger_group.L_Index)
-	add_key('Key_B', 'B', finger_group.L_Index)
-
-	add_key('Key_LAlt', 'Alt', finger_group.L_Thumb)
-	add_key('Key_Space', 'Space', finger_group.L_Thumb)
-
-	add_key('Key_RAlt', 'Alt', finger_group.R_Thumb)
-	add_key('Key_Space', 'Space', finger_group.R_Thumb)
-
-	add_key('Key_7', '7', finger_group.R_Index)
-	add_key('Key_Y', 'Y', finger_group.R_Index)
-	add_key('Key_U', 'U', finger_group.R_Index)
-	add_key('Key_H', 'H', finger_group.R_Index)
-	add_key('Key_J', 'J', finger_group.R_Index)
-	add_key('Key_N', 'N', finger_group.R_Index)
-	add_key('Key_M', 'M', finger_group.R_Index)
-
-	add_key('Key_8', '8', finger_group.R_Middle)
-	add_key('Key_9', '9', finger_group.R_Middle)
-	add_key('Key_I', 'I', finger_group.R_Middle)
-	add_key('Key_K', 'K', finger_group.R_Middle)
-	add_key('Key_LArrow', '<', finger_group.R_Middle)
-
-	add_key('Key_0', '0', finger_group.R_Ring)
-	add_key('Key_O', 'O', finger_group.R_Ring)
-	add_key('Key_L', 'L', finger_group.R_Ring)
-	add_key('Key_RArrow', '>', finger_group.R_Ring)
-
-	add_key('Key_Minus', '-', finger_group.R_Pinky)
-	add_key('Key_Equal', '=', finger_group.R_Pinky)
-	add_key('Key_Backspace', 'Back', finger_group.R_Pinky)
-	add_key('Key_P', 'P', finger_group.R_Pinky)
-	add_key('Key_LBracket', '{', finger_group.R_Pinky)
-	add_key('Key_RBracket', '}', finger_group.R_Pinky)
-	add_key('Key_TwoDot', ':', finger_group.R_Pinky)
-	add_key('Key_TwoComma', '"', finger_group.R_Pinky)
-	add_key('Key_Enter', 'Enter', finger_group.R_Pinky)
-	add_key('Key_BackSlash', '\\', finger_group.R_Pinky)
-	add_key('Key_Slash', '/', finger_group.R_Pinky)
-	add_key('Key_RShift', 'Shift', finger_group.R_Pinky)
-	add_key('Key_RCtrl', 'Ctrl', finger_group.R_Pinky)
-
-
-	--Инициализация пальцев
-	finger_group['none']['node'] = gui.get_node('none')
+		--Инициализация пальцев
+		finger_group[hash('none')]['node'] = gui.get_node('none')
 
 	init_finger('L_Pinky')
 	init_finger('L_Ring')
@@ -186,47 +132,114 @@ function init_keys()
 	init_finger('R_Ring')
 	init_finger('R_Pinky')
 
-	--Заканчиваем инициализацию клавиш
-	for key, val in pairs(keys_objects) do
-		val.node = gui.get_node(key)
+	--Строим таблицу клавиш
+	add_key('Key_Tilda', '~', 'L_Pinky')
+	add_key('Key_Tab', 'Tab', 'L_Pinky')
+	add_key('Key_Q', 'Q', 'L_Pinky')
+	add_key('Key_A', 'A', 'L_Pinky')
+	add_key('Key_CapsLock', 'Caps', 'L_Pinky')
+	add_key('Key_LShift', 'Shift', 'L_Pinky')
+	add_key('Key_LCtrl', 'Ctrl', 'L_Pinky')
 
-		set_std_key_color(key)
-		gui.set_text(gui.get_node(val.id..'/KeyChar'), val.char)
-		gui.set_enabled(gui.get_node(val.id..'/Frame'), false)
-	end
+	add_key('Key_1', '1', 'L_Ring')
+	add_key('Key_2', '2', 'L_Ring')
+	add_key('Key_W', 'W', 'L_Ring')
+	add_key('Key_S', 'S', 'L_Ring')
+	add_key('Key_Z', 'Z', 'L_Ring')
+
+	add_key('Key_3', '3', 'L_Middle')
+	add_key('Key_4', '4', 'L_Middle')
+	add_key('Key_E', 'E', 'L_Middle')
+	add_key('Key_D', 'D', 'L_Middle')
+	add_key('Key_X', 'X', 'L_Middle')
+
+	add_key('Key_5', '5', 'L_Index')
+	add_key('Key_6', '6', 'L_Index')
+	add_key('Key_R', 'R', 'L_Index')
+	add_key('Key_T', 'T', 'L_Index')
+	add_key('Key_F', 'F', 'L_Index')
+	add_key('Key_G', 'G', 'L_Index')
+	add_key('Key_C', 'C', 'L_Index')
+	add_key('Key_V', 'V', 'L_Index')
+	add_key('Key_B', 'B', 'L_Index')
+
+	add_key('Key_LAlt', 'Alt', 'L_Thumb')
+	add_key('Key_Space', 'Space', 'L_Thumb')
+
+	add_key('Key_Space', 'Space', 'R_Thumb')
+	add_key('Key_RAlt', 'Alt', 'R_Thumb')
+
+	add_key('Key_7', '7', 'R_Index')
+	add_key('Key_Y', 'Y', 'R_Index')
+	add_key('Key_U', 'U', 'R_Index')
+	add_key('Key_H', 'H', 'R_Index')
+	add_key('Key_J', 'J', 'R_Index')
+	add_key('Key_N', 'N', 'R_Index')
+	add_key('Key_M', 'M', 'R_Index')
+
+	add_key('Key_8', '8', 'R_Middle')
+	add_key('Key_9', '9', 'R_Middle')
+	add_key('Key_I', 'I', 'R_Middle')
+	add_key('Key_K', 'K', 'R_Middle')
+	add_key('Key_LArrow', '<', 'R_Middle')
+
+	add_key('Key_0', '0', 'R_Ring')
+	add_key('Key_O', 'O', 'R_Ring')
+	add_key('Key_L', 'L', 'R_Ring')
+	add_key('Key_RArrow', '>', 'R_Ring')
+
+	add_key('Key_Minus', '-', 'R_Pinky')
+	add_key('Key_Equal', '=', 'R_Pinky')
+	add_key('Key_Backspace', 'Back', 'R_Pinky')
+	add_key('Key_P', 'P', 'R_Pinky')
+	add_key('Key_LBracket', '{', 'R_Pinky')
+	add_key('Key_RBracket', '}', 'R_Pinky')
+	add_key('Key_TwoDot', ':', 'R_Pinky')
+	add_key('Key_TwoComma', '"', 'R_Pinky')
+	add_key('Key_Enter', 'Enter', 'R_Pinky')
+	add_key('Key_BackSlash', '\\', 'R_Pinky')
+	add_key('Key_Slash', '/', 'R_Pinky')
+	add_key('Key_RShift', 'Shift', 'R_Pinky')
+	add_key('Key_RCtrl', 'Ctrl', 'R_Pinky')
+
+	change_profile('profile_1')
 end
 
+--Алгоритм
+--1) Если нет выбранной клавиши - выходим из метода;
+--2) Если у выбранной клавиши назначен этот палец, который нажали,
+--то удаляем его с клавиши;
+--3) Иначе добавляем его к клавише.
 function finger_press(info)
 	if (selected_key_node == nil) then return end
+	--Информация о нажатой клавише
+	local key_data = keys_objects[gui.get_id(selected_key_node)]
 
-	local key = keys_objects[gui.get_id(selected_key_node)]
-	if (key.finger_group[0].node == info.node) then
-		anim_finger_deselect(key.finger_group[0].node)
-		if (key.finger_group[1]~=nil) then
-			key.finger_group[0] = key.finger_group[1]
-			key.finger_group[1] = nil
+	if (key_data.finger[0].node == info.node) then
+		anim_finger_deselect(info.node, true)
+		if (key_data.finger[1]~=nil) then
+			key_data.finger[0] = key_data.finger[1]
+			key_data.finger[1] = nil
 		else
-			key.finger_group[0] = finger_group.none
+			--У клавиши теперь нет назначенных пальцев
+			key_data.finger[0] = finger_group[hash('none')]
 		end
-	elseif (key.finger_group[1]~=nil and key.finger_group[1].node == info.node) then
-		anim_finger_deselect(key.finger_group[1].node)
-		key.finger_group[1] = nil
+	elseif (key_data.finger[1]~=nil and key_data.finger[1].node == info.node) then
+		anim_finger_deselect(info.node, true)
+		key_data.finger[1] = nil
 	else
-		for keys, val in pairs(finger_group) do
-			if (val.node == info.node) then
-				anim_finger_select(info.node)
-				if (key.finger_group[0] == finger_group.none) then
-					key.finger_group[0] = val
-				else
-					if (key.finger_group[1] ~= nil) then
-						anim_finger_deselect(key.finger_group[1].node)
-					end
-					key.finger_group[1] = val
-				end
+		local fnode = finger_group[gui.get_id(info.node)]
+		anim_finger_select(fnode.node)
+		if (key_data.finger[0] == finger_group[hash('none')]) then
+			key_data.finger[0] = fnode
+		else
+			if (key_data.finger[1] ~= nil) then
+				anim_finger_deselect(key_data.finger[1].node, true)
 			end
+			key_data.finger[1] = fnode
 		end
 	end
-
+	--Обновляем цвет выбранной клавиши
 	animate_key_select(gui.get_id(selected_key_node))
 end
 
@@ -235,9 +248,11 @@ function process_input(action_id, action)
 		gooey.button(key, action_id, action, press, key_update)
 	end
 
-	for key, val in pairs(finger_group) do
-		if (key ~= 'none') then
-			gooey.button(key, action_id, action, finger_press)
+	if selected_key_node ~= nil then
+		for key, val in pairs(finger_group) do
+			if (key ~= hash('none')) then
+				gooey.button(key, action_id, action, finger_press)
+			end
 		end
 	end
 end
@@ -252,16 +267,11 @@ function init(self)
 			.show_in(gui.get_node('KeyBoard'), transitions.fade_in, gui.EASING_OUTCUBIC, 1.5, 0.7)
 			.show_in(gui.get_node('LHand'), transitions.slide_in_bottom, gui.EASING_OUTCUBIC, 1.5, 0.7)
 			.show_in(gui.get_node('RHand'), transitions.slide_in_bottom, gui.EASING_OUTCUBIC, 1.5, 1.1)
-			.show_in(gui.get_node('top_panel'), transitions.slide_in_top, gui.EASING_OUTCUBIC, 2, 1.1)
+			.show_in(gui.get_node('top_panel'), transitions.slide_in_top, gui.EASING_OUTCUBIC, 1.5, 1.1)
 			.show_out(gui.get_node('root'), transitions.fade_out, gui.EASING_INCUBIC, 0.5, 0)
 			.back_in(gui.get_node('root'), transitions.fade_in, gui.EASING_OUTCUBIC, 0.5, 1)
 end
 
-function final(self)
-	-- Add finalization code here
-	-- Learn more: https://defold.com/manuals/script/
-	-- Remove this function if not needed
-end
 
 function on_message(self, message_id, message, sender)
 	self.transition.handle(message_id, message, sender)
@@ -272,29 +282,44 @@ function on_message(self, message_id, message, sender)
 end
 
 --Функция обновления клавиш
-function key_update(node)
-	if (node == nil or node.node == selected_key_node) then return end
+function key_update(updating_key)
+	if (updating_key == nil or updating_key.node == selected_key_node) then return end
 
-	local idd = gui.get_id(node.node)
-	if node.over_now then
-		animate_key_select(idd)
-	elseif node.out_now then
-		animate_key_deselect(idd)
+	if updating_key.over_now then
+		animate_key_select(gui.get_id(updating_key.node))
+	elseif updating_key.out_now then
+		animate_key_deselect(gui.get_id(updating_key.node))
 	end
 end
 
 function press(node)
+	local key_data = nil
 	local select = selected_key_node
 	selected_key_node = nil
 	if (select ~= nil and select ~= node.node) then
-		gui.set_enabled(gui.get_node(keys_objects[gui.get_id(select)].id..'/Frame'), false)
+		key_data = keys_objects[gui.get_id(select)]
+		key_data.finger[0].is_selected = false
+		if (key_data.finger[1] ~= nil) then key_data.finger[1].is_selected = false end
+
+		gui.set_enabled(gui.get_node(key_data.id..'/Frame'), false)
 		animate_key_deselect(gui.get_id(select))
 	end
 
+	key_data = keys_objects[gui.get_id(node.node)]
 	if (select == node.node) then
-		gui.set_enabled(gui.get_node(keys_objects[gui.get_id(node.node)].id..'/Frame'), false)
+		gui.set_enabled(gui.get_node(key_data.id..'/Frame'), false)
+		key_data.finger[0].is_selected = false
+		if (key_data.finger[1] ~= nil) then key_data.finger[1].is_selected = false end
 	else
-		gui.set_enabled(gui.get_node(keys_objects[gui.get_id(node.node)].id..'/Frame'), true)
+		anim_finger_select(key_data.finger[0].node)
+		key_data.finger[0].is_selected = true
+
+		if (key_data.finger[1] ~= nil) then
+			anim_finger_select(key_data.finger[1].node)
+			key_data.finger[1].is_selected = true
+		end
+
+		gui.set_enabled(gui.get_node(key_data.id..'/Frame'), true)
 		selected_key_node = node.node
 	end
 end
@@ -307,11 +332,20 @@ local function button_update(button)
   end
 end
 
+local profile_num = 1
+
 function on_input(self, action_id, action)
 	if (screen_is_not_interactable) then return end
 	process_input(action_id, action)
 	gooey.button('btn_connect_glove', action_id, action, function(info) msg.post('mainScreen:/script#gameScript', 'OPEN_CONNECT_SCREEN') end, button_update)
 	gooey.button('btn_settings', action_id, action, function() msg.post('mainScreen:/script#gameScript', 'OPEN_SETTINGS_SCREEN') end, button_update)
+
+	if (action_id == hash('change_profile') and action.released) then
+		profile_num = profile_num + 1
+		if (profile_num > 3) then profile_num = 1 end
+		gui.set_text(gui.get_node('label_profile_select'), 'Десятипальцевая раскладка (вар. '..profile_num..')')
+		change_profile('profile_'..profile_num)
+	end
 end
 
 function on_reload(self)

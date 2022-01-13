@@ -9,7 +9,7 @@ local prev_press_btn_node = nil
 function init(self)
     msg.post(".", "acquire_input_focus")
     self.transition = transitions.create(gui.get_node('root'))
-    .show_in(transitions.slide_in_right, gui.EASING_OUTCUBIC, 1, 0.1)
+    .show_in(transitions.slide_in_right, gui.EASING_OUTCUBIC, 1, 0.2)
     .back_out(transitions.slide_out_right, gui.EASING_INCUBIC, 1, 0)
 
     prev_press_btn_node = gui.get_node('btn_base')

@@ -3,6 +3,10 @@ fonts {
   name: "vietnam"
   font: "/assets/fonts/ibm_plex_24dp.font"
 }
+fonts {
+  name: "ibm_plex_48dp"
+  font: "/assets/fonts/ibm_plex_48dp.font"
+}
 textures {
   name: "KeyIcons"
   texture: "/assets/sprites/KeyIcons.atlas"
@@ -110,10 +114,10 @@ nodes {
   layer: ""
   inherit_alpha: true
   slice9 {
-    x: 8.0
-    y: 8.0
-    z: 8.0
-    w: 8.0
+    x: 16.0
+    y: 16.0
+    z: 16.0
+    w: 16.0
   }
   clipping_mode: CLIPPING_MODE_NONE
   clipping_visible: true
@@ -165,10 +169,10 @@ nodes {
   layer: ""
   inherit_alpha: true
   slice9 {
-    x: 8.0
-    y: 8.0
-    z: 8.0
-    w: 8.0
+    x: 16.0
+    y: 16.0
+    z: 16.0
+    w: 16.0
   }
   clipping_mode: CLIPPING_MODE_NONE
   clipping_visible: true

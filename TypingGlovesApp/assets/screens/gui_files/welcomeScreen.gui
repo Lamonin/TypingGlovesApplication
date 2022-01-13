@@ -1,15 +1,7 @@
 script: "/assets/screens/gui_scripts/welcomeScreen.gui_script"
 fonts {
-  name: "ibm_plex_24dp"
-  font: "/assets/fonts/ibm_plex_24dp.font"
-}
-fonts {
   name: "ibm_plex_38dp_light"
   font: "/assets/fonts/ibm_plex_38dp_light.font"
-}
-fonts {
-  name: "ibm_plex_24dp_light"
-  font: "/assets/fonts/ibm_plex_24dp_light.font"
 }
 fonts {
   name: "ibm_plex_20dp_light"
@@ -17,7 +9,7 @@ fonts {
 }
 fonts {
   name: "ibm_plex_32dp"
-  font: "/assets/fonts/ibm_plex_32dp.font"
+  font: "/assets/fonts/ibm_plex_32dp_light.font"
 }
 background_color {
   x: 0.0
